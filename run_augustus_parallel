@@ -10,10 +10,10 @@
 ## Tange, O., 2020, GNU Parallel 20201122 ('Biden'), Zenodo, https://doi.org/10.5281/zenodo.4284075
 
 ### Get the directory where the program is located
-home=/home/daniel/Programs/augustus_parallel/
+home=/mnt/data/arslan/tool/Augustus-3.5.0/scripts/
 
 ### Standard path for a miniconda3 install
-miniconda=~/miniconda3/etc/profile.d/conda.sh
+miniconda=/mnt/data/arslan/tool/miniconda3/etc/profile.d/conda.sh
 
 ### Check if miniconda3 is install and if yes activate it
 if [[ -f "$miniconda" ]]; then
@@ -106,7 +106,7 @@ fi
 ### End parameter check
 
 ### Activate the AUGUSTUS conda environment
-conda activate augustus
+conda activate augustus-env
 
 ### Convert the supplied AUGUSTUS parameters from e.g. '--species=arabidopsis,--gff3=on'
 ### to '--species=arabidopsis --gff3=on' and save them in parameterA
