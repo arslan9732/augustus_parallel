@@ -1,34 +1,26 @@
 # AUGUSTUS parallel execution
 
-AUGUSTUS gene prediction with a defined species model can't be executed by default in a parallel fashion to speed up the process of gene prediction. This script is intended for multifasta files like genomes. It will take the multifasta file and according to the supplied number of jobs it will chop the file in several multifasta files and run several AUGUSTUS instances in parallel. Using GNU parallel (Tange et al., 2020) AUGUSTUS will be run in parallel on the choped multifasta files. The generated annotation files (gff3) are merged at the end. Therefore, the option --uniqueGeneId is set to true by default to ensure unique gene ids for all predicted genes. The perl script 'getAnnoFast.pl' (supplied with AUGUSTUS) is run at the end.
+AUGUSTUS gene prediction with a defined species model can't be executed by default in a parallel fashion to speed up the process of gene prediction. This script is intended for multifasta files like genomes. It will take the multifasta file and according to the supplied number of jobs it will chop the file in several multifasta files according to the number of contigs and run several AUGUSTUS instances in parallel. Using GNU parallel (Tange et al., 2020) AUGUSTUS will be run in parallel on the choped multifasta files. The generated annotation files (gff3) are merged at the end. Therefore, the option --uniqueGeneId is set to true by default to ensure unique gene ids for all predicted genes. The perl script 'getAnnoFast.pl' (supplied with AUGUSTUS) is run at the end.
 
 ### What you need
 
 To run the script you will need the following programs:
   - GNU parallel
-  - Python > 3.6
   - Perl
   - AUGUSTUS
 
 ### How to install it
 
-Install GNU parallel on Ubuntu:
-
-```bash
-sudo apt install parallel
-```
-
 It is assumed you have conda installed on your system.
-For people without unlimited power install GNU parallel into your conda base:
-```bash
-mamba install parallel=20201122
+For people without unlimited power install GNU parallel into your conda enviornment:
+
 ```
-Install AUGUSTUS in a conda environment:
-```bash
-mamba create -n augustus augustus
+conda activate augustus-env
+conda install -c conda-forge parallel
 ```
-Copy the folder containing run_augustus_parallel and split_chunk.py to your
-desired directory. After that edit line nr. 13 in run_augustus_parallel:
+
+Copy `run_augustus_parallel` to your desired directory. After that edit line nr. 13 in run_augustus_parallel:
+
 ```bash
 cd ~/augustus_parallel
 nano run_augustus_parallel
@@ -53,31 +45,19 @@ user@computer$ run_augustus_parallel
 Run AUGUSTUS in parallel.
 The AUGUSTUS parameter --uniqueGeneId is set to true by default (necessary).
 
-Usage: run_augustus_parallel -f fasta.file.fa -j n -c n -s suffix -p AUGUSTUS_parameters
+Usage: run_augustus_parallel -f fasta.file.fa -c n -p AUGUSTUS_parameters
 
     -f Path to fasta file.fa (mandatory)
-    -j N chunks to generate from the multifasta file
     -c Number of CPUs to use (careful with the memomry consumption of AUGUSTUS)
-    -s Suffix (defaulting to Aug_parallel)
     -p AUGUSTUS parameters: e.g. '--species=arabidopsis,--gff3=on,--UTR=on,--progress=true'
     -o Output path (full): /home/user/analysis
 ```
 
-The python script split_chunk.py will split the multifasta file into equal indicated parts. For highly fragmented genomes it might be good to first check the total number of sequences in the file:
-```bash
-grep -E '^>' multifasta.fa | wc -l
+**Usage Example:**
 ```
-
-If you want to create a single file per sequence in list just use the number from the command above for the -j flag.
-The number of CPUs (the number of AUGUSTUS instances) is controlled with the -c flag.
-An run example would be:
-
-```bash
-grep -E '^>' genome.fa | wc -l
-19
-run_augustus_parallel -i genome.fa -j 19 -c 8 -s OrganismX -p '--species=Your_specie_of_choice,--gff3=on,--progress=true'
+run_augustus_parallel -i genome.fa -c 8 -p '--species=Your_specie_of_choice,--UTR=on'
 ```
-The above is a minmal working example. The script will split the multifasta file into 19 single files(-j 19). With GNU parallel 8 instances of AUGUSTUS will be run in parallel (-c 8). The -p flag can be populated with many more parameters. For a complete overview of AUGUSTUS parameters please use:
+The above is a minmal working example. For a complete overview of AUGUSTUS parameters please use:
 ```bash
 augustus
 augustus --species=help
