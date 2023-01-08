@@ -110,6 +110,7 @@ echo -e "[info]\tGFF3 mode:            $gff3_mode"
 ### Create a temporary folder to save the fasta chuncks
 mkdir -p $wd"/tmp/"
 
+GENOME_PATH=`realpath $parameterF`
 
 sed '/^>/ s/ .*//' $parameterF >${parameterF%.*}_mod.fa
 GENOME=${parameterF%.*}_mod.fa
@@ -144,7 +145,7 @@ done
 
 ### Use the AUGUSTUS perl script getAnnoFasta.pl to extract the mRNA, cds and
 ### Protein sequences of the predicted genes
-getAnnoFasta.pl --seqfile=$wd/../$parameterF $wd"/"$file_name".aug.gff3"
+getAnnoFasta.pl --seqfile=$GENOME_PATH $wd"/"$file_name".aug.gff3"
 
 conda deactivate
 rm -rf $wd/tmp
