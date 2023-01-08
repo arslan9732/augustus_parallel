@@ -144,7 +144,7 @@ done
 
 ### Use the AUGUSTUS perl script getAnnoFasta.pl to extract the mRNA, cds and
 ### Protein sequences of the predicted genes
-getAnnoFasta.pl --seqfile=$parameterF $wd"/"$file_name".aug.gff3"
+getAnnoFasta.pl --seqfile=$wd/../$parameterF $wd"/"$file_name".aug.gff3"
 
 conda deactivate
 rm -rf $wd/tmp
