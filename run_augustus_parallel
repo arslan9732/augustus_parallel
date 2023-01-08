@@ -24,9 +24,6 @@ else
     exit 1
 fi
 
-### Define variable for split_chunk.py
-chop_seq=$home"split_chunk.py"
-
 ### Helpfunction in case something goes wrong
 helpFunction()
 {
@@ -34,12 +31,10 @@ helpFunction()
    echo "Run AUGUSTUS in parallel."
    echo "The AUGUSTUS parameter --uniqueGeneId and --gff3 is set to true by default (necessary)."
    echo ""
-   echo "Usage: $(basename -- "$0") -f fasta.file.fa -j n -s suffix -p AUGUSTUS_parameters"
+   echo "Usage: $(basename -- "$0") -f fasta.file.fa -c threads -p AUGUSTUS_parameters"
    echo ""
    echo -e "\t-f Path to fasta file.fa (mandatory)"
-   echo -e "\t-j N chunks of sequences (sequences will be equally distributed)"
    echo -e "\t-c Number of CPU cores to use (be careful with memory consumption of AUGUSTUS)"
-   echo -e "\t-s Suffix (defaulting to Aug_parallel)"
    echo -e "\t-p AUGUSTUS parameters: e.g. '--species=arabidopsis,--UTR=on,--progress=true'"
    echo -e "\t-o Output path (full): /home/user/analysis"
    echo ""
@@ -47,13 +42,11 @@ helpFunction()
 }
 
 # Parse the parameters
-while getopts "c:f:j:s:p:o:" opt
+while getopts "c:f:p:o:" opt
 do
    case "$opt" in
       c ) parameterC="$OPTARG" ;;
       f ) parameterF="$OPTARG" ;;
-      j ) parameterJ="$OPTARG" ;;
-      s ) parameterS="$OPTARG" ;;
       p ) parameterP="$OPTARG" ;;
       o ) parameterO="$OPTARG" ;;
       ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
@@ -67,22 +60,10 @@ then
    helpFunction
 fi
 
-if [ -z "$parameterJ" ]
-then
-   echo -e "[warning]\tNo -j set. Defaulting to 1.";
-   parameterJ=1
-fi
-
 if [ -z "$parameterC" ]
 then
    echo -e "[warning]\tNo -c set. Defaulting to 1.";
    parameterC=1
-fi
-
-if [ -z "$parameterS" ]
-then
-   echo -e "[warning]\tNo suffix given. Defaulting to: Aug_parallel";
-   parameterS=Aug_parallel
 fi
 
 if [ -z "$parameterP" ]
@@ -121,7 +102,6 @@ file_name=$(basename -- $parameterF)
 
 echo -e "[info]\tWorking dir:          $wd"
 echo -e "[info]\tOutput dir:           $parameterO"
-echo -e "[info]\tChunks:               $parameterJ"
 echo -e "[info]\tCPUs:                 $parameterC"
 echo -e "[info]\tFasta:                $parameterF"
 echo -e "[info]\tAUGUSTUS parameters:  $parameterA"
@@ -130,14 +110,15 @@ echo -e "[info]\tGFF3 mode:            $gff3_mode"
 ### Create a temporary folder to save the fasta chuncks
 mkdir $wd"/tmp/"
 
-### Run the python script to chop the multi fasta file into pieces
-a=1
-if [ "$parameterJ" -gt "$a" ]
-then
-    python $chop_seq $parameterF $parameterJ $parameterS $wd 2> $wd"/tmp/split_chunk.error.log"
-else
-    cp $parameterF $wd"/tmp/"
-fi
+
+sed '/^>/ s/ .*//' $parameterF >${parameterF%.*}_mod.fa
+GENOME=${parameterF%.*}_mod.fa
+splitMfasta.pl  $GENOME --outputpath=$wd"/tmp/"
+
+### Rename of split files with contig name. 
+
+cd $wd/tmp/
+for f in ${GENOME%.*}.split.*; do NAME=`grep ">" $f`; mv $f ${NAME#>}.fa;done
 
 ### Save path of generated fasta file chuncks
 chunck_files=$wd"/tmp/"*.fa
@@ -150,14 +131,8 @@ do
     echo -e "augustus$parameterA --uniqueGeneId=true --gff3=on $f > ${wd}/tmp/${file}.gff3" >> $wd"/tmp/aug_cmd.txt"
 done
 
-### Read all the written AUGUSTUS commands to GNU parallel and execute n jobs
-### as indicated in parallel
-cat $wd"/tmp/aug_cmd.txt" | parallel --gnu \
-                                     --progress \
-                                     --retries 4 \
-                                     --resume-failed \
-                                     -j $parameterC \
-                                     --joblog $wd"/tmp/"$parameterS".parallel.log"
+
+cat $wd"/tmp/aug_cmd.txt" | parallel -j $parameterC --joblog $wd"/tmp/Aug.parallel.log"
 
 ### Concatenate all GFF3 files into one
 chunck_gff3=$wd"/tmp/"*.gff3
@@ -172,3 +147,15 @@ done
 getAnnoFasta.pl --seqfile=$parameterF $wd"/"$file_name".aug.gff3"
 
 conda deactivate
+rm -rf $wd/tmp
+
+
+echo "#########################################################"
+echo "#########################################################"
+echo "#########################################################"
+echo "                                                         "
+echo "            Good bye, I am going to sleep :)             "
+echo "                                                         "
+echo "#########################################################"
+echo "#########################################################"
+echo "#########################################################"
