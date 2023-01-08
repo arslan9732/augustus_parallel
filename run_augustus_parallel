@@ -108,7 +108,7 @@ echo -e "[info]\tAUGUSTUS parameters:  $parameterA"
 echo -e "[info]\tGFF3 mode:            $gff3_mode"
 
 ### Create a temporary folder to save the fasta chuncks
-mkdir $wd"/tmp/"
+mkdir -p $wd"/tmp/"
 
 
 sed '/^>/ s/ .*//' $parameterF >${parameterF%.*}_mod.fa
